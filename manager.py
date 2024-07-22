@@ -27,9 +27,32 @@ class ExpenseTracker:
     def load_expenses(self):
         try:
             with open(self.filename, "r") as file:
-                self.expenses = json.load(file)
+                try:
+                    self.expenses = json.load(file)
+                except json.JSONDecodeError:
+                    print("File is empty or malformed JSON. Starting with an empty list.")
+                    self.expenses = []
         except FileNotFoundError:
+            print(f"{self.filename} not found. Starting with an empty list.")
             self.expenses = []
+
+    def generate_summary(self):
+        total = sum(expense["amount"] for expense in self.expenses)
+        print(f"Total Expenses: ${total:.2f}")
+        return total
+
+    def compare_to_us_average(self):
+        us_average_yearly_spending = 63000
+        total = self.generate_summary()
+        difference = us_average_yearly_spending - total
+        percentage = (total / us_average_yearly_spending) * 100
+        print(f"Your total expenses are ${total:.2f}.")
+        print(f"The average yearly spending in the US is ${us_average_yearly_spending:.2f}.")
+        print(f"You have spent {percentage:.2f}% of the average yearly spending.")
+        if total > us_average_yearly_spending:
+            print(f"You have spent ${-difference:.2f} more than the average yearly spending.")
+        else:
+            print(f"You have spent ${difference:.2f} less than the average yearly spending.")
 
 if __name__ == "__main__":
     tracker = ExpenseTracker()
@@ -39,7 +62,9 @@ if __name__ == "__main__":
         print("1. Add Expense")
         print("2. View Expenses")
         print("3. Delete Expense")
-        print("4. Quit")
+        print("4. Generate Summary")
+        print("5. Compare to US Average")
+        print("6. Quit")
         choice = input("Choose an option: ")
 
         if choice == "1":
@@ -52,6 +77,10 @@ if __name__ == "__main__":
             index = int(input("Enter expense index to delete: ")) - 1
             tracker.delete_expense(index)
         elif choice == "4":
+            tracker.generate_summary()
+        elif choice == "5":
+            tracker.compare_to_us_average()
+        elif choice == "6":
             break
         else:
             print("Invalid choice!")
