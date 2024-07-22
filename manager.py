@@ -1,4 +1,6 @@
 import json
+import tkinter as tk
+from tkinter import messagebox
 
 class ExpenseTracker:
     def __init__(self, filename="expenses.json"):
@@ -10,8 +12,7 @@ class ExpenseTracker:
         self.save_expenses()
 
     def view_expenses(self):
-        for i, expense in enumerate(self.expenses):
-            print(f"{i + 1}. {expense['description']}: ${expense['amount']}")
+        return self.expenses
 
     def delete_expense(self, index):
         if 0 <= index < len(self.expenses):
@@ -38,7 +39,6 @@ class ExpenseTracker:
 
     def generate_summary(self):
         total = sum(expense["amount"] for expense in self.expenses)
-        print(f"Total Expenses: ${total:.2f}")
         return total
 
     def compare_to_us_average(self):
@@ -46,41 +46,98 @@ class ExpenseTracker:
         total = self.generate_summary()
         difference = us_average_yearly_spending - total
         percentage = (total / us_average_yearly_spending) * 100
-        print(f"Your total expenses are ${total:.2f}.")
-        print(f"The average yearly spending in the US is ${us_average_yearly_spending:.2f}.")
-        print(f"You have spent {percentage:.2f}% of the average yearly spending.")
-        if total > us_average_yearly_spending:
-            print(f"You have spent ${-difference:.2f} more than the average yearly spending.")
+        return total, us_average_yearly_spending, difference, percentage
+
+class ExpenseTrackerApp:
+    def __init__(self, root):
+        self.tracker = ExpenseTracker()
+        self.root = root
+        self.root.title("Expense Tracker")
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        # Add Expense
+        self.description_label = tk.Label(self.root, text="Description:")
+        self.description_label.grid(row=0, column=0)
+        self.description_entry = tk.Entry(self.root)
+        self.description_entry.grid(row=0, column=1)
+
+        self.amount_label = tk.Label(self.root, text="Amount:")
+        self.amount_label.grid(row=1, column=0)
+        self.amount_entry = tk.Entry(self.root)
+        self.amount_entry.grid(row=1, column=1)
+
+        self.add_button = tk.Button(self.root, text="Add Expense", command=self.add_expense)
+        self.add_button.grid(row=2, column=0, columnspan=2)
+
+        # View Expenses
+        self.view_button = tk.Button(self.root, text="View Expenses", command=self.view_expenses)
+        self.view_button.grid(row=3, column=0, columnspan=2)
+
+        # Delete Expense
+        self.index_label = tk.Label(self.root, text="Expense Index:")
+        self.index_label.grid(row=4, column=0)
+        self.index_entry = tk.Entry(self.root)
+        self.index_entry.grid(row=4, column=1)
+
+        self.delete_button = tk.Button(self.root, text="Delete Expense", command=self.delete_expense)
+        self.delete_button.grid(row=5, column=0, columnspan=2)
+
+        # Generate Summary
+        self.summary_button = tk.Button(self.root, text="Generate Summary", command=self.generate_summary)
+        self.summary_button.grid(row=6, column=0, columnspan=2)
+
+        # Compare to US Average
+        self.compare_button = tk.Button(self.root, text="Compare to US Average", command=self.compare_to_us_average)
+        self.compare_button.grid(row=7, column=0, columnspan=2)
+
+    def add_expense(self):
+        description = self.description_entry.get()
+        amount = self.amount_entry.get()
+        if description and amount:
+            try:
+                amount = float(amount)
+                self.tracker.add_expense(description, amount)
+                messagebox.showinfo("Success", "Expense added successfully!")
+            except ValueError:
+                messagebox.showerror("Error", "Please enter a valid amount.")
         else:
-            print(f"You have spent ${difference:.2f} less than the average yearly spending.")
+            messagebox.showerror("Error", "Please enter both description and amount.")
+
+    def view_expenses(self):
+        expenses = self.tracker.view_expenses()
+        expense_list = "\n".join([f"{i + 1}. {expense['description']}: ${expense['amount']}" for i, expense in enumerate(expenses)])
+        messagebox.showinfo("Expenses", expense_list if expense_list else "No expenses recorded.")
+
+    def delete_expense(self):
+        index = self.index_entry.get()
+        if index:
+            try:
+                index = int(index) - 1
+                self.tracker.delete_expense(index)
+                messagebox.showinfo("Success", "Expense deleted successfully!")
+            except ValueError:
+                messagebox.showerror("Error", "Please enter a valid index.")
+        else:
+            messagebox.showerror("Error", "Please enter an index.")
+
+    def generate_summary(self):
+        total = self.tracker.generate_summary()
+        messagebox.showinfo("Summary", f"Total Expenses: ${total:.2f}")
+
+    def compare_to_us_average(self):
+        total, us_average, difference, percentage = self.tracker.compare_to_us_average()
+        comparison = (f"Your total expenses are ${total:.2f}.\n"
+                      f"The average yearly spending in the US is ${us_average:.2f}.\n"
+                      f"You have spent {percentage:.2f}% of the average yearly spending.\n")
+        if total > us_average:
+            comparison += f"You have spent ${-difference:.2f} more than the average yearly spending."
+        else:
+            comparison += f"You have spent ${difference:.2f} less than the average yearly spending."
+        messagebox.showinfo("Comparison", comparison)
 
 if __name__ == "__main__":
-    tracker = ExpenseTracker()
-
-    while True:
-        print("\nExpense Tracker")
-        print("1. Add Expense")
-        print("2. View Expenses")
-        print("3. Delete Expense")
-        print("4. Generate Summary")
-        print("5. Compare to US Average")
-        print("6. Quit")
-        choice = input("Choose an option: ")
-
-        if choice == "1":
-            description = input("Enter description: ")
-            amount = float(input("Enter amount: "))
-            tracker.add_expense(description, amount)
-        elif choice == "2":
-            tracker.view_expenses()
-        elif choice == "3":
-            index = int(input("Enter expense index to delete: ")) - 1
-            tracker.delete_expense(index)
-        elif choice == "4":
-            tracker.generate_summary()
-        elif choice == "5":
-            tracker.compare_to_us_average()
-        elif choice == "6":
-            break
-        else:
-            print("Invalid choice!")
+    root = tk.Tk()
+    app = ExpenseTrackerApp(root)
+    root.mainloop()
