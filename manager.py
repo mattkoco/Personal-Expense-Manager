@@ -1,9 +1,13 @@
+import json
+
 class ExpenseTracker:
-    def __init__(self):
-        self.expenses = []
+    def __init__(self, filename="expenses.json"):
+        self.filename = filename
+        self.load_expenses()
 
     def add_expense(self, description, amount):
         self.expenses.append({"description": description, "amount": amount})
+        self.save_expenses()
 
     def view_expenses(self):
         for i, expense in enumerate(self.expenses):
@@ -12,8 +16,20 @@ class ExpenseTracker:
     def delete_expense(self, index):
         if 0 <= index < len(self.expenses):
             del self.expenses[index]
+            self.save_expenses()
         else:
             print("Invalid index!")
+
+    def save_expenses(self):
+        with open(self.filename, "w") as file:
+            json.dump(self.expenses, file)
+
+    def load_expenses(self):
+        try:
+            with open(self.filename, "r") as file:
+                self.expenses = json.load(file)
+        except FileNotFoundError:
+            self.expenses = []
 
 if __name__ == "__main__":
     tracker = ExpenseTracker()
