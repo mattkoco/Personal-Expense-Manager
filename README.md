@@ -3,6 +3,7 @@
     - Add an expense.
     - View all expenses.
     - Delete an expense by index.
+- Updates made
     - Added Json file for data persistence between sessions
     - Fixed some bugs with Json being empty
     - Added feature to generate a total spendings report
